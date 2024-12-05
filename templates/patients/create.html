@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>إنشاء مريض جديد</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label class="form-label">اسم المريض</label>
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">تاريخ الميلاد</label>
+            {{ form.birth_date(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">الجنس</label>
+            {{ form.gender(class="form-select") }}
+        </div>
+        <button type="submit" class="btn btn-primary">إنشاء المريض</button>
+    </form>
+    <a href="{{ url_for('patients') }}" class="btn btn-secondary mt-3">إلغاء</a>
+</div>
+{% endblock %}

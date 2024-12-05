@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>إدارة المواعيد</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('new_appointment') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> موعد جديد
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">تصفية المواعيد</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('appointments') }}">
+                        <div class="mb-3">
+                            <label class="form-label">التاريخ</label>
+                            <input type="date" name="date" class="form-control" value="{{ request.args.get('date', '') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">نوع الفحص</label>
+                            <select name="type" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="xray" {{ 'selected' if request.args.get('type') == 'xray' }}>أشعة سينية</option>
+                                <option value="mri" {{ 'selected' if request.args.get('type') == 'mri' }}>رنين مغناطيسي</option>
+                                <option value="ct" {{ 'selected' if request.args.get('type') == 'ct' }}>أشعة مقطعية</option>
+                                <option value="ultrasound" {{ 'selected' if request.args.get('type') == 'ultrasound' }}>موجات صوتية</option>
+                                <option value="blood_test" {{ 'selected' if request.args.get('type') == 'blood_test' }}>تحليل دم</option>
+                                <option value="urine_test" {{ 'selected' if request.args.get('type') == 'urine_test' }}>تحليل بول</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الحالة</label>
+                            <select name="status" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="scheduled" {{ 'selected' if request.args.get('status') == 'scheduled' }}>مجدول</option>
+                                <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>مكتمل</option>
+                                <option value="cancelled" {{ 'selected' if request.args.get('status') == 'cancelled' }}>ملغي</option>
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">تطبيق</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>الوقت</th>
+                                    <th>المريض</th>
+                                    <th>نوع الفحص</th>
+                                    <th>الحالة</th>
+                                    <th>ملاحظات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td>{{ appointment.scheduled_time|strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ appointment.patient.name }}</td>
+                                    <td>{{ appointment.examination_type }}</td>
+                                    <td>
+                                        {% if appointment.status == 'scheduled' %}
+                                            <span class="badge bg-primary">مجدول</span>
+                                        {% elif appointment.status == 'completed' %}
+                                            <span class="badge bg-success">مكتمل</span>
+                                        {% elif appointment.status == 'cancelled' %}
+                                            <span class="badge bg-danger">ملغي</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ appointment.notes }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('edit_appointment', id=appointment.id) }}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button onclick="cancelAppointment({{ appointment.id }})" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if pagination.pages > 1 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('appointments.index', page=pagination.prev_num) }}">السابق</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('appointments.index', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('appointments.index', page=pagination.next_num) }}">التالي</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelAppointment(appointmentId) {
+    if (confirm('هل أنت متأكد من إلغاء هذا الموعد؟')) {
+        fetch(`/appointments/${appointmentId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء إلغاء الموعد');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

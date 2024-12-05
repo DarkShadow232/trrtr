@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>تعديل المستخدم</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label class="form-label">اسم المستخدم</label>
+            {{ form.username(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            {{ form.email(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">الاسم</label>
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">الدور</label>
+            {{ form.role(class="form-select") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">كلمة المرور (اترك فارغاً إذا لم ترغب في تغييرها)</label>
+            {{ form.password(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">تحديث المستخدم</button>
+    </form>
+    <a href="{{ url_for('users') }}" class="btn btn-secondary mt-3">إلغاء</a>
+</div>
+{% endblock %}
